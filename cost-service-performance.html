@@ -3707,8 +3707,10 @@
         const tr = document.createElement('tr');
         tr.style.cursor = 'pointer';
         tr.onclick = function() { openConsigneePanel(originalIdx); };
+        const facilityMatch = FACILITIES.find(function(f) { return f.name === c.name; });
+        const cityState = facilityMatch ? facilityMatch.displayName : '';
         tr.innerHTML =
-          '<td><div class="lane-name">' + c.name + '</div></td>' +
+          '<td><div class="lane-name">' + c.name + '</div>' + (cityState ? '<div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">' + cityState + '</div>' : '') + '</td>' +
           '<td>' + c.volume + ' loads</td>' +
           '<td>$' + c.cpp.toFixed(2) + '/lb</td>' +
           '<td>' + perfBadge(c.otd) + '</td>';
