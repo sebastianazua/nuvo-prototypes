@@ -414,6 +414,39 @@
     .filter-btn:hover { color: var(--text); border-color: rgba(255,255,255,0.25); }
     .filter-btn.active { background: var(--green-nav); border-color: rgba(107,189,138,0.4); color: var(--text); }
 
+    .date-picker-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 6px 14px; border-radius: 8px; font-size: 13px; font-weight: 500;
+      cursor: pointer; font-family: inherit; background: var(--surface);
+      border: 1px solid var(--border); color: var(--text); transition: all 0.15s;
+    }
+    .date-picker-btn:hover { border-color: rgba(255,255,255,0.25); }
+    .date-picker-btn.open  { border-color: rgba(107,189,138,0.5); }
+    .date-picker-panel {
+      display: none; position: absolute; top: calc(100% + 8px); right: 0;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; padding: 20px; z-index: 200; min-width: 380px;
+      box-shadow: 0 12px 32px rgba(0,0,0,0.5);
+    }
+    .date-picker-panel.open { display: block; }
+    .date-picker-panel-label { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 12px; }
+    .date-picker-quick { display: flex; gap: 8px; margin-bottom: 20px; }
+    .date-picker-quick-btn {
+      flex: 1; padding: 8px 0; border-radius: 8px; font-size: 13px; font-weight: 500;
+      cursor: pointer; font-family: inherit; background: transparent;
+      border: 1px solid var(--border); color: var(--text-secondary); transition: all 0.15s;
+      text-align: center;
+    }
+    .date-picker-quick-btn:hover { border-color: rgba(107,189,138,0.4); color: var(--text); }
+    .date-picker-quick-btn.active { background: #1e4034; border-color: rgba(107,189,138,0.5); color: var(--text); }
+    .date-picker-custom { display: flex; gap: 10px; }
+    .date-picker-custom input { flex: 1; padding: 9px 12px; border-radius: 8px; font-size: 13px; font-family: inherit; background: var(--surface-2); border: 1px solid var(--border); color: var(--text); }
+    body.light .date-picker-btn { background: #fff; color: var(--text); border-color: rgba(0,0,0,0.15); }
+    body.light .date-picker-panel { background: #fff; border-color: rgba(0,0,0,0.12); box-shadow: 0 12px 32px rgba(0,0,0,0.12); }
+    body.light .date-picker-quick-btn { border-color: rgba(0,0,0,0.12); color: #555; }
+    body.light .date-picker-quick-btn.active { background: #111827; border-color: #111827; color: #fff; }
+    body.light .date-picker-custom input { background: #f5f5f5; border-color: rgba(0,0,0,0.12); color: var(--text); }
+
     .network-layout {
       display: flex;
       gap: 12px;
@@ -1312,18 +1345,22 @@
         <div class="page-title">Cost & Service Performance</div>
         <div class="page-subtitle">Optimize your freight spend and service levels across your customer base</div>
       </div>
-      <div style="display:flex;align-items:center;gap:4px;position:relative;">
-        <button class="filter-btn active" id="strip-t30" onclick="setStripFilter('T30', this)">T30</button>
-        <button class="filter-btn" id="strip-t60" onclick="setStripFilter('T60', this)">T60</button>
-        <button class="filter-btn" id="strip-t90" onclick="setStripFilter('T90', this)">T90</button>
-        <button class="filter-btn" id="strip-custom" onclick="toggleStripDatePicker(this)">Custom</button>
-        <div id="strip-date-picker" style="display:none;position:absolute;top:calc(100% + 6px);right:0;background:var(--surface);border:1px solid rgba(255,255,255,0.12);border-radius:6px;padding:14px 16px;z-index:100;white-space:nowrap;box-shadow:0 8px 24px rgba(0,0,0,0.4);">
-          <div style="font-size:10px;font-weight:500;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:10px;">Custom Range</div>
-          <div style="display:flex;align-items:center;gap:8px;">
-            <input type="date" id="strip-date-from" class="form-input" style="width:140px;padding:6px 10px;font-size:12px;" />
-            <span style="color:var(--text-secondary);font-size:11px;">to</span>
-            <input type="date" id="strip-date-to" class="form-input" style="width:140px;padding:6px 10px;font-size:12px;" />
-            <button class="btn btn-outline" style="font-size:11px;padding:5px 10px;" onclick="applyStripDate()">Apply</button>
+      <div style="position:relative;">
+        <button class="date-picker-btn" id="strip-picker-btn" onclick="toggleDatePicker('strip')">
+          <span id="strip-picker-label">30 days</span>
+        </button>
+        <div class="date-picker-panel" id="strip-picker-panel">
+          <div class="date-picker-panel-label">Quick Range</div>
+          <div class="date-picker-quick">
+            <button class="date-picker-quick-btn" id="strip-q7"  onclick="applyQuickRange('strip','T7','7 days')">7 days</button>
+            <button class="date-picker-quick-btn active" id="strip-q30" onclick="applyQuickRange('strip','T30','30 days')">30 days</button>
+            <button class="date-picker-quick-btn" id="strip-q60" onclick="applyQuickRange('strip','T60','60 days')">60 days</button>
+            <button class="date-picker-quick-btn" id="strip-q90" onclick="applyQuickRange('strip','T90','90 days')">90 days</button>
+          </div>
+          <div class="date-picker-panel-label">Custom</div>
+          <div class="date-picker-custom">
+            <input type="date" id="strip-date-from" placeholder="From" />
+            <input type="date" id="strip-date-to"   placeholder="To" onchange="applyCustomRange('strip')" />
           </div>
         </div>
       </div>
@@ -3828,14 +3865,29 @@
       const annualStr     = (annualIsOver ? '+' : '−') + '$' + (absAnnual >= 1000 ? (absAnnual / 1000).toFixed(0) + 'k' : Math.round(absAnnual).toLocaleString());
       const annualSub     = annualIsOver ? 'Overspend / year' : 'Saved / year';
 
-      function dlFilterBtn(period) {
-        const active = period === _dlActivePeriod ? ' active' : '';
-        return '<button class="filter-btn' + active + '" onclick="setDLStripFilter(\'' + period + '\')">' + period + '</button>';
-      }
-
+      var dlPeriodLabels = { T7: '7 days', T30: '30 days', T60: '60 days', T90: '90 days' };
+      var dlPickerLabel = dlPeriodLabels[_dlActivePeriod] || '30 days';
       document.getElementById('dl-header-filters').innerHTML =
-        dlFilterBtn('T30') + dlFilterBtn('T60') + dlFilterBtn('T90')
-        + '<button class="filter-btn' + (_dlActivePeriod === 'Custom' ? ' active' : '') + '" onclick="setDLStripFilter(\'Custom\')">Custom</button>';
+        '<div style="position:relative;">'
+        + '<button class="date-picker-btn" id="dl-picker-btn" onclick="toggleDatePicker(\'dl\')">'
+        +   '<span id="dl-picker-label">' + dlPickerLabel + '</span>'
+        +   '<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+        + '</button>'
+        + '<div class="date-picker-panel" id="dl-picker-panel">'
+        +   '<div class="date-picker-panel-label">Quick Range</div>'
+        +   '<div class="date-picker-quick">'
+        +     '<button class="date-picker-quick-btn' + (_dlActivePeriod==='T7'  ? ' active' : '') + '" id="dl-q7"  onclick="applyQuickRange(\'dl\',\'T7\',\'7 days\')">7 days</button>'
+        +     '<button class="date-picker-quick-btn' + (_dlActivePeriod==='T30' ? ' active' : '') + '" id="dl-q30" onclick="applyQuickRange(\'dl\',\'T30\',\'30 days\')">30 days</button>'
+        +     '<button class="date-picker-quick-btn' + (_dlActivePeriod==='T60' ? ' active' : '') + '" id="dl-q60" onclick="applyQuickRange(\'dl\',\'T60\',\'60 days\')">60 days</button>'
+        +     '<button class="date-picker-quick-btn' + (_dlActivePeriod==='T90' ? ' active' : '') + '" id="dl-q90" onclick="applyQuickRange(\'dl\',\'T90\',\'90 days\')">90 days</button>'
+        +   '</div>'
+        +   '<div class="date-picker-panel-label">Custom</div>'
+        +   '<div class="date-picker-custom">'
+        +     '<input type="date" id="dl-date-from" placeholder="From" />'
+        +     '<input type="date" id="dl-date-to"   placeholder="To" onchange="applyCustomRange(\'dl\')" />'
+        +   '</div>'
+        + '</div>'
+        + '</div>';
 
       const stripHtml =
         '<div class="insights-strip" style="border-radius:8px 8px 0 0;margin-bottom:0;">'
@@ -5018,33 +5070,6 @@
       T90: { loads: '874',   contracted: 698, spot: 176, loadsTrend: '+22% vs prior period', spend: '$249,150', spendVsMarket: '−3.8% vs market', spendColor: 'var(--green)', otp: '78%', otd: '92%', attention: 5, annualSpend: '$2.99M', annualSaved: '$114K' },
     };
 
-    function toggleStripDatePicker(btn) {
-      const picker = document.getElementById('strip-date-picker');
-      const isOpen = picker.style.display !== 'none';
-      document.querySelectorAll('#strip-t30,#strip-t60,#strip-t90,#strip-custom').forEach(b => b.classList.remove('active'));
-      if (!isOpen) { btn.classList.add('active'); picker.style.display = 'block'; }
-      else { picker.style.display = 'none'; }
-    }
-    function applyStripDate() {
-      const from = document.getElementById('strip-date-from').value;
-      const to   = document.getElementById('strip-date-to').value;
-      if (from && to) {
-        document.getElementById('strip-custom').textContent = from.slice(5) + ' → ' + to.slice(5);
-        document.getElementById('strip-date-picker').style.display = 'none';
-      }
-    }
-
-    function setStripFilter(period, btn) {
-      document.querySelectorAll('#strip-t30,#strip-t60,#strip-t90,#strip-custom').forEach(b => b.classList.remove('active'));
-      document.getElementById('strip-date-picker').style.display = 'none';
-      renderInsights(period);
-      btn.classList.add('active');
-      const d = stripMetrics[period];
-      document.getElementById('strip-annual-spend').textContent = d.annualSpend;
-      document.getElementById('strip-saved').textContent        = d.annualSaved;
-      document.getElementById('strip-otp').textContent          = d.otp;
-      document.getElementById('strip-otd').textContent          = d.otd;
-    }
 
     // ── STRIP FILTERS ─────────────────────────────────────────────────────
     const stripData = {
@@ -5056,58 +5081,83 @@
     const arrowUp   = `<svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M5 8V2M2 5l3-3 3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
     const arrowDown = `<svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M5 2v6M2 5l3 3 3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 
-    function setStripFilter(period, btn) {
-      document.querySelectorAll('#strip-t30,#strip-t60,#strip-t90,#strip-custom').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      document.getElementById('strip-date-picker').style.display = 'none';
-      const d = stripData[period];
-      if (!d) return;
-      document.getElementById('strip-volume').textContent    = d.volume;
-      document.getElementById('strip-mix').textContent       = d.mix;
-      document.getElementById('strip-customers').textContent = d.customers;
-      document.getElementById('strip-otd').textContent       = d.otd;
+    function setStripFilter(period) { applyQuickRange('strip', period, period.replace('T','') + ' days'); }
 
-      const otdTrend = document.getElementById('strip-otd-trend');
-      otdTrend.style.color = d.otdUp ? 'var(--green)' : 'var(--red)';
-      otdTrend.innerHTML   = (d.otdUp ? arrowUp : arrowDown) + ' ' + d.otdDelta + ' vs. last period';
-
-      document.getElementById('strip-cpp').textContent = d.cpp;
-      const cppTrend = document.getElementById('strip-cpp-trend');
-      cppTrend.style.color = d.cppUp ? 'var(--red)' : 'var(--green)';
-      cppTrend.innerHTML   = (d.cppUp ? arrowDown : arrowUp) + ' ' + d.cppDelta + ' vs. last period';
-
-      // Also update Delivery Locations table
-      activeConsigneeData = CONSIGNEES_BY_PERIOD[period] || CONSIGNEES;
-      renderConsignees();
-    }
-
-    function toggleStripDatePicker(btn) {
-      const picker = document.getElementById('strip-date-picker');
-      const isOpen = picker.style.display !== 'none';
-      document.querySelectorAll('#strip-t30,#strip-t60,#strip-t90,#strip-custom').forEach(b => b.classList.remove('active'));
+    function toggleDatePicker(id) {
+      var panel = document.getElementById(id + '-picker-panel');
+      var btn   = document.getElementById(id + '-picker-btn');
+      if (!panel) return;
+      var isOpen = panel.classList.contains('open');
+      // Close all open panels first
+      document.querySelectorAll('.date-picker-panel.open').forEach(function(p) { p.classList.remove('open'); });
+      document.querySelectorAll('.date-picker-btn.open').forEach(function(b) { b.classList.remove('open'); });
       if (!isOpen) {
-        btn.classList.add('active');
-        picker.style.display = 'block';
-        document.addEventListener('click', closeStripPickerOutside, { once: false });
-      } else {
-        picker.style.display = 'none';
+        panel.classList.add('open');
+        btn.classList.add('open');
+        setTimeout(function() {
+          document.addEventListener('click', function closePicker(e) {
+            if (!panel.contains(e.target) && e.target !== btn && !btn.contains(e.target)) {
+              panel.classList.remove('open');
+              btn.classList.remove('open');
+              document.removeEventListener('click', closePicker);
+            }
+          });
+        }, 0);
       }
     }
 
-    function closeStripPickerOutside(e) {
-      const picker = document.getElementById('strip-date-picker');
-      const customBtn = document.getElementById('strip-custom');
-      if (!picker.contains(e.target) && e.target !== customBtn) {
-        picker.style.display = 'none';
-        document.removeEventListener('click', closeStripPickerOutside);
+    function applyQuickRange(id, period, label) {
+      // Update quick btn active state
+      var prefixes = { strip: ['strip-q7','strip-q30','strip-q60','strip-q90'], dl: ['dl-q7','dl-q30','dl-q60','dl-q90'] };
+      (prefixes[id] || []).forEach(function(bid) {
+        var b = document.getElementById(bid);
+        if (b) b.classList.remove('active');
+      });
+      var activeBtnId = id + '-q' + period.replace('T','');
+      var activeBtn = document.getElementById(activeBtnId);
+      if (activeBtn) activeBtn.classList.add('active');
+      // Update label
+      var labelEl = document.getElementById(id + '-picker-label');
+      if (labelEl) labelEl.textContent = label;
+      // Close panel
+      var panel = document.getElementById(id + '-picker-panel');
+      var btn   = document.getElementById(id + '-picker-btn');
+      if (panel) panel.classList.remove('open');
+      if (btn)   btn.classList.remove('open');
+      // Apply filter
+      if (id === 'strip') {
+        var d = stripData[period];
+        if (!d) return;
+        document.getElementById('strip-volume').textContent    = d.volume;
+        document.getElementById('strip-mix').textContent       = d.mix;
+        document.getElementById('strip-customers').textContent = d.customers;
+        document.getElementById('strip-otd').textContent       = d.otd;
+        var otdTrend = document.getElementById('strip-otd-trend');
+        otdTrend.style.color = d.otdUp ? 'var(--green)' : 'var(--red)';
+        otdTrend.innerHTML   = (d.otdUp ? arrowUp : arrowDown) + ' ' + d.otdDelta + ' vs. last period';
+        document.getElementById('strip-cpp').textContent = d.cpp;
+        var cppTrend = document.getElementById('strip-cpp-trend');
+        cppTrend.style.color = d.cppUp ? 'var(--red)' : 'var(--green)';
+        cppTrend.innerHTML   = (d.cppUp ? arrowDown : arrowUp) + ' ' + d.cppDelta + ' vs. last period';
+        activeConsigneeData = CONSIGNEES_BY_PERIOD[period] || CONSIGNEES;
+        renderConsignees();
+      } else if (id === 'dl') {
+        _dlActivePeriod = period;
+        if (_dlCurrentIdx !== null) openConsigneePanel(_dlCurrentIdx);
       }
     }
 
-    function applyStripDate() {
-      const from = document.getElementById('strip-date-from').value;
-      const to   = document.getElementById('strip-date-to').value;
+    function applyCustomRange(id) {
+      var from = document.getElementById(id + '-date-from').value;
+      var to   = document.getElementById(id + '-date-to').value;
       if (!from || !to) return;
-      document.getElementById('strip-date-picker').style.display = 'none';
+      var label = from.slice(5).replace('-','/') + ' – ' + to.slice(5).replace('-','/');
+      var labelEl = document.getElementById(id + '-picker-label');
+      if (labelEl) labelEl.textContent = label;
+      var panel = document.getElementById(id + '-picker-panel');
+      var btn   = document.getElementById(id + '-picker-btn');
+      if (panel) panel.classList.remove('open');
+      if (btn)   btn.classList.remove('open');
     }
 
     function setDateFilter(period, btn) {
